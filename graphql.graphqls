@@ -132,6 +132,7 @@ input AccountUpdateInput {
 enum AuthenticatorMode {
   basic
   biometric
+  none
 }
 
 """Available authenticators that the system currently supports"""
@@ -142,6 +143,16 @@ enum AuthenticatorType {
   ping
   okta
   none
+}
+
+type BcidSettings {
+  authenticatorMode: AuthenticatorMode
+  wellnessEnabled: Boolean
+}
+
+input BcidSettingsUpdateInput {
+  authenticatorMode: AuthenticatorMode
+  wellnessEnabled: Boolean
 }
 
 """Card object, representing a users access card in the system"""
@@ -849,17 +860,15 @@ type ServiceHealthResponse {
 """Settings object"""
 type Settings {
   authenticator: AuthenticatorType
-  authenticatorMode: AuthenticatorMode
   credentialUUID: String
-  wellnessEnabled: Boolean
+  bcidSettings: BcidSettings
 }
 
 """Fields available for account settings"""
 input SettingsUpdateInput {
   authenticator: AuthenticatorType
-  authenticatorMode: AuthenticatorMode
   credentialUUID: String
-  wellnessEnabled: Boolean
+  bcidSettings: BcidSettingsUpdateInput
 }
 
 """information required to complete a sync agent activation"""
