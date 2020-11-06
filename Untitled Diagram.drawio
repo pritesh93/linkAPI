@@ -1,1 +1,61 @@
-<mxfile host="app.diagrams.net" modified="2020-11-06T17:19:41.385Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36" version="13.9.2" etag="NzDW_k_REw_lvb4X26hJ" type="github"><diagram id="QmEP_kDayeN-pKzWXXlA">UzV2zq1wL0osyPDNT0nNUTV2VTV2LsrPL4GwciucU3NyVI0MMlNUjV1UjYwMgFjVyA2HrCFY1qAgsSg1rwSLBiADYTaQg2Y1AA==</diagram></mxfile>
+<mxfile host="app.diagrams.net" modified="2020-11-06T19:01:30.670Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36" etag="XHRoLppl8AFrpI88hImF" version="13.9.2" type="github">
+  <diagram id="QmEP_kDayeN-pKzWXXlA" name="Page-1">
+    <mxGraphModel dx="981" dy="575" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-1" value="Frontend API&lt;br&gt;From the Payment Processing System" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="630" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-2" value="Starbucks, correlationId, state, status&lt;br&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" vertex="1" parent="1">
+          <mxGeometry x="375" y="130" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-3" value="Out to &lt;br&gt;T&amp;amp;A Back-end" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="390" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-4" value="Out to Payroll&lt;br&gt;Back-end" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="390" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-5" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="260" y="300" width="300" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-6" value="ORM/DAL- AR, Cache" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="310" width="210" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-8" value="" style="endArrow=classic;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="vVgINqHNYVTqvXTC9xrD-6" target="vVgINqHNYVTqvXTC9xrD-2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="380" y="380" as="sourcePoint" />
+            <mxPoint x="430" y="330" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-9" value="InjestController/APIController" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="500" width="190" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-10" value="Payroll&lt;br&gt;Request(CompanyID)&lt;br&gt;post to Payroll() hash&lt;br&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="390" width="70" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-11" value="TAndA&lt;br&gt;getRequestEmployees(companyID)&lt;br&gt;hash[].request(start:0, size:1000, limit:10)&lt;br&gt;store in DB/Cache" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="390" width="70" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-12" value="" style="endArrow=classic;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="vVgINqHNYVTqvXTC9xrD-11" target="vVgINqHNYVTqvXTC9xrD-3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="590" y="445" as="sourcePoint" />
+            <mxPoint x="640" y="395" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-14" value="" style="endArrow=classic;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="vVgINqHNYVTqvXTC9xrD-10" target="vVgINqHNYVTqvXTC9xrD-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="180" y="440" as="sourcePoint" />
+            <mxPoint x="230" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="vVgINqHNYVTqvXTC9xrD-15" value="" style="endArrow=classic;startArrow=classic;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="vVgINqHNYVTqvXTC9xrD-10" target="vVgINqHNYVTqvXTC9xrD-11">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="380" y="400" as="sourcePoint" />
+            <mxPoint x="430" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
