@@ -32,6 +32,11 @@ directive @connection(
   filter: [String!]
 ) on FIELD
 
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar DateTime
+
 """Account object, representing an account entity in the system"""
 type Account {
   """Date the account was registered within the system"""
@@ -72,15 +77,6 @@ type Account {
 
   """Main contact email"""
   email: String
-}
-
-"""The response returned after successfully creating an account"""
-type AccountCreateResponse {
-  """Details of the first user for the newly created account"""
-  user: User
-
-  """Password of the first user"""
-  password: String
 }
 
 """Fields required to create an account"""
@@ -128,31 +124,13 @@ input AccountUpdateInput {
   email: String
 }
 
-"""Types of stepups available (only used for BCID right now)"""
-enum AuthenticatorMode {
-  basic
-  biometric
-  none
-}
+"""The response returned after successfully creating an account"""
+type AccountCreateResponse {
+  """Details of the first user for the newly created account"""
+  user: User
 
-"""Available authenticators that the system currently supports"""
-enum AuthenticatorType {
-  duo
-  bcid
-  sms
-  ping
-  okta
-  none
-}
-
-type BcidSettings {
-  authenticatorMode: AuthenticatorMode
-  wellnessEnabled: Boolean
-}
-
-input BcidSettingsUpdateInput {
-  authenticatorMode: AuthenticatorMode
-  wellnessEnabled: Boolean
+  """Password of the first user"""
+  password: String
 }
 
 """Card object, representing a users access card in the system"""
@@ -281,6 +259,21 @@ type Credential {
   uuid: String
 }
 
+"""Names of currently supported credentials"""
+enum CredentialType {
+  """DUO Two Factor Auth"""
+  duo
+
+  """BioConnect ID"""
+  bcid
+
+  """Ping ID"""
+  ping
+
+  """Okta"""
+  okta
+}
+
 """Fields required to create a credential"""
 input CredentialInput {
   """Username for a service"""
@@ -314,21 +307,6 @@ input CredentialInput {
   status: String
 }
 
-"""Names of currently supported credentials"""
-enum CredentialType {
-  """DUO Two Factor Auth"""
-  duo
-
-  """BioConnect ID"""
-  bcid
-
-  """Ping ID"""
-  ping
-
-  """Okta"""
-  okta
-}
-
 """Device object, representing a BioConnect reader in the system"""
 type Device {
   serialNumber: String
@@ -340,38 +318,7 @@ type Device {
   network: DeviceNetworkSettings
   parentDevice: String
   type: DeviceType
-}
-
-"""Encrypted and signed hash key for a specific device"""
-input DeviceHashKey {
-  serialNumber: String!
-  hashKey: String!
-  signature: String!
-}
-
-"""Represents a device's request for a key used for hashing"""
-type DeviceHashKeyRequest {
-  serialNumber: String
-  certificate: String
-}
-
-"""List of encrypted and signed hash keys for devices"""
-input DeviceHashKeysInput {
-  keys: [DeviceHashKey!]!
-}
-
-"""Fields required to create a new device"""
-input DeviceInput {
-  serialNumber: String!
-  name: String!
-  priority: Int = 0
-  defaultReader: Boolean = true
-  isBypass: Boolean = true
-  network: DeviceNetworkSettingsInput
-  parentDevice: String!
-
-  """The use-case of the device. Defaults to door (4)"""
-  type: DeviceType
+  firmware: String
 }
 
 """
@@ -399,6 +346,35 @@ type DeviceNetworkSettings {
   ethernetEnabled: Boolean
 }
 
+"""Represents a device's request for a key used for hashing"""
+type DeviceHashKeyRequest {
+  serialNumber: String
+  certificate: String
+}
+
+"""Type of device"""
+enum DeviceType {
+  """Normal door"""
+  door
+
+  """Server cabinet"""
+  cabinet
+}
+
+"""Fields required to create a new device"""
+input DeviceInput {
+  serialNumber: String!
+  name: String!
+  priority: Int = 0
+  defaultReader: Boolean = true
+  isBypass: Boolean = true
+  network: DeviceNetworkSettingsInput
+  parentDevice: String!
+
+  """The use-case of the device. Defaults to door (4)"""
+  type: DeviceType
+}
+
 """Available fields for network configuration of a device"""
 input DeviceNetworkSettingsInput {
   wifiEnabled: Boolean
@@ -421,15 +397,6 @@ input DeviceNetworkSettingsInput {
   ethernetEnabled: Boolean
 }
 
-"""Type of device"""
-enum DeviceType {
-  """Normal door"""
-  door
-
-  """Server cabinet"""
-  cabinet
-}
-
 """Fields available to edit a device"""
 input DeviceUpdateInput {
   serialNumber: String!
@@ -438,6 +405,378 @@ input DeviceUpdateInput {
   defaultReader: Boolean
   isBypass: Boolean
   network: DeviceNetworkSettingsInput
+}
+
+"""Encrypted and signed hash key for a specific device"""
+input DeviceHashKey {
+  serialNumber: String!
+  hashKey: String!
+  signature: String!
+}
+
+"""List of encrypted and signed hash keys for devices"""
+input DeviceHashKeysInput {
+  keys: [DeviceHashKey!]!
+}
+
+"""Fields returned after checking the health of a given service"""
+type ServiceHealthResponse {
+  """Name of service"""
+  service: String
+
+  """Timestamp of last online"""
+  timestamp: String
+
+  """Online status"""
+  online: Boolean
+}
+
+type PlatformHealthResponse {
+  level: HealthLevel
+  message: String
+}
+
+"""Status levels of the platform"""
+enum HealthLevel {
+  healthy
+  unhealthy
+  critical
+}
+
+"""Available service names"""
+enum Service {
+  """Handles storage of data"""
+  dataStoreService
+
+  """Handles the stepup logic"""
+  authService
+
+  """Interfaces with the hardware and performs the access control logic"""
+  physicalAccessService
+
+  """Creates and verifys tokens for sessions"""
+  tokenService
+
+  """Handles all logic for getting the hardware up and running"""
+  deviceManagementService
+
+  """Handles outbound notification logic"""
+  notificationService
+
+  """Handles the acm sync logic"""
+  syncService
+
+  """Handles storing the sync data"""
+  syncStorageService
+}
+
+"""
+Schedule object, representing a time based schedule in which a action
+should take place
+"""
+type Schedule {
+  uuid: String
+  startTime: String
+  endTime: String
+  name: String
+  description: String
+  isActive: Boolean
+  isAccountWide: Boolean
+  isRecurring: Boolean
+}
+
+"""Fields required to create a new schedule"""
+input ScheduleInput {
+  startTime: String!
+  endTime: String!
+  name: String!
+  description: String!
+  isActive: Boolean = true
+  isAccountWide: Boolean = true
+  isRecurring: Boolean = true
+}
+
+"""Fields available to edit a schedule"""
+input ScheduleUpdateInput {
+  uuid: String!
+  startTime: String
+  endTime: String
+  name: String
+  description: String
+  isActive: Boolean
+  isAccountWide: Boolean
+  isRecurring: Boolean
+}
+
+"""User object, representing a User in the system"""
+type User {
+  username: String
+  firstName: String
+  lastName: String
+  email: String
+  phoneNumber: String
+  bio: String
+  roles: [UserRole]
+  cards: [Card]
+  profiles: [UserProfile]
+  accounts: [Account]
+  uuid: String
+}
+
+type UserRole {
+  name: UserRoleType
+  description: String
+}
+
+"""Roles available to assign to a user"""
+enum UserRoleType {
+  """Completly powerless"""
+  user
+
+  """CRUD all the things!"""
+  administrator
+}
+
+"""Fields required to create a new user"""
+input UserInput {
+  username: String!
+  password: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  phoneNumber: String
+  bio: String!
+  role: UserRoleType = user
+}
+
+"""Fields available to edit a user"""
+input UserUpdateInput {
+  username: String!
+  firstName: String
+  lastName: String
+  email: String
+  phoneNumber: String
+  bio: String
+  role: UserRoleType
+}
+
+"""Fields required to change the password of a user"""
+input UserPasswordChangeInput {
+  password: String!
+  newPassword: String!
+}
+
+"""Fields required to reset the password of a user"""
+input UserPasswordResetInput {
+  subDomain: String!
+  username: String!
+}
+
+"""User profile, representing a user in a third-party system"""
+type UserProfile {
+  uuid: String
+  externalId: String
+  name: String
+  type: ProfileType
+  isBypass: Boolean
+  isActive: Boolean
+  rawData: String
+}
+
+enum ProfileType {
+  ACM_Brivo_OnSite
+  ACM_Brivo_OnAir
+  ACM_Genetec_SecurityCenter
+  ACM_KantechEntraPass
+  ACM_KeyScan_Aurora
+  ACM_Lenel_OnGuard
+  ACM_OpenOptions_dnaFusion
+  ACM_PACOM_GMS
+  ACM_Paxton_GMS
+  ACM_PCSC_LincPLUS
+  ACM_Honeywell_ProWatch
+  ACM_RS2_AccessIt
+  ACM_S2_Netbox
+  ACM_SoftwareHouse_CCURE9000
+  ACM_Honeywell_WINPAK
+  STEPUP_Duo
+  STEPUP_BCID
+}
+
+"""Fields required to create a new user profile"""
+input UserProfileInput {
+  username: String!
+  rawData: String!
+  type: ProfileType!
+  externalId: String!
+  name: String
+  isBypass: Boolean = true
+  isActive: Boolean = true
+}
+
+"""Fields available to edit a user profile"""
+input UserProfileUpdateInput {
+  uuid: String!
+  externalId: String
+  name: String
+  type: ProfileType
+  isBypass: Boolean
+  isActive: Boolean
+  rawData: String
+}
+
+"""
+Transaction object, representing any sort of access transaction in the
+system
+"""
+type Transaction {
+  username: String
+  firstName: String
+  lastName: String
+  email: String
+  userUUID: String
+  cardUUID: String
+  groupUUID: String
+  groupName: String
+  uuid: String
+  message: String
+  type: TransactionType
+  readerId: String
+  readerName: String
+  status: String
+  complete: Boolean
+  isValid: Boolean
+  requireStepUp: Boolean
+  stepUpProvider: String
+  locationId: String
+  offline: Boolean
+  createdAt: String
+  updatedAt: String
+}
+
+"""Response for a transaction"""
+type TransactionResponse {
+  dataType: TransactionType
+  username: String
+  isValid: Boolean
+  error: String
+}
+
+"""Type of data stored for a particular transaction"""
+enum TransactionType {
+  Stepup
+  RemoteOpen
+  Wiegand
+  BCE
+}
+
+input TransactionInput {
+  username: String
+  cardHMAC: String
+  type: TransactionType!
+  additionalInfo: String
+  deviceSerialNumber: String
+  deviceName: String
+}
+
+"""Object representing a sync event"""
+type SyncEvent {
+  startTime: String
+  endTime: String
+  totalTime: String
+  uuid: String
+}
+
+"""Fields required to update a sync event"""
+input SyncEventInput {
+  uuid: String!
+  endTime: String!
+}
+
+"""information returned after a successful activation"""
+type SyncAgentActivationResponse {
+  certificate: String
+}
+
+"""information required to complete a sync agent activation"""
+input SyncAgentActivationInput {
+  csr: String!
+}
+
+"""Pagination fields that are configurable"""
+input PaginationInput {
+  """The page that you would like to get. Works in tandem with perPage"""
+  page: Int!
+
+  """Number of objects per page, defaults to 10"""
+  perPage: Int = 10
+}
+
+"""Pagination object"""
+type PaginationInfo {
+  page: Int
+  perPage: Int
+  totalRows: Int
+}
+
+"""The response for listUsers"""
+type PaginatedUsers {
+  objects: [User]
+  totalRows: Int
+}
+
+"""The response for listProfiles"""
+type PaginatedUserProfiles {
+  objects: [UserProfile]
+  totalRows: Int
+}
+
+"""The response for listDevices"""
+type PaginatedDevices {
+  objects: [Device]
+  totalRows: Int
+}
+
+"""The response for listSchedules"""
+type PaginatedSchedules {
+  objects: [Schedule]
+  totalRows: Int
+}
+
+"""The response for listCredentials"""
+type PaginatedCredentials {
+  objects: [Credential]
+  totalRows: Int
+}
+
+"""The response for listTransactions"""
+type PaginatedTransactions {
+  objects: [Transaction]
+  totalRows: Int
+}
+
+"""The response for listGroups"""
+type PaginatedGroups {
+  objects: [Group]
+  totalRows: Int
+}
+
+"""The response for listSyncEvents"""
+type PaginatedSyncEvents {
+  objects: [SyncEvent]
+  totalRows: Int
+}
+
+"""The response for listNotifications"""
+type PaginatedNotifications {
+  objects: [Notification]
+  totalRows: Int
+}
+
+"""The response for listWebHooks"""
+type PaginatedWebHooks {
+  objects: [WebHook]
+  totalRows: Int
 }
 
 """
@@ -479,11 +818,257 @@ input GroupUpdateInput {
   credentialUUID: String
 }
 
-"""Status levels of the platform"""
-enum HealthLevel {
-  healthy
-  unhealthy
+"""
+Notification object, representing any sort of notification in the
+system
+"""
+type Notification {
+  uuid: String
+  timestamp: String
+  level: NotificationLevel
+  source: String
+  message: String
+  rawData: String
+}
+
+enum NotificationLevel {
+  info
+  warn
   critical
+}
+
+type WellnessSurvey {
+  uuid: String
+  questions: [String]
+}
+
+type BcidSettings {
+  authenticatorMode: AuthenticatorMode
+  wellnessEnabled: Boolean
+  wellnessSurvey: WellnessSurvey
+}
+
+"""Settings object"""
+type Settings {
+  authenticator: AuthenticatorType
+  credentialUUID: String
+  bcidSettings: BcidSettings
+}
+
+"""Available authenticators that the system currently supports"""
+enum AuthenticatorType {
+  duo
+  bcid
+  sms
+  ping
+  okta
+  none
+}
+
+"""Types of stepups available (only used for BCID right now)"""
+enum AuthenticatorMode {
+  basic
+  biometric
+  none
+}
+
+input WellnessSurveyUpdateInput {
+  uuid: String
+  questions: [String]
+}
+
+input BcidSettingsUpdateInput {
+  authenticatorMode: AuthenticatorMode
+  wellnessEnabled: Boolean
+  wellnessSurvey: WellnessSurveyUpdateInput
+}
+
+"""Fields available for account settings"""
+input SettingsUpdateInput {
+  authenticator: AuthenticatorType
+  credentialUUID: String
+  bcidSettings: BcidSettingsUpdateInput
+}
+
+"""Web hook object, representing a web hook in the system"""
+type WebHook {
+  """Name of the web hook"""
+  name: String
+
+  """Unique id of the web hook"""
+  uuid: String
+
+  """Description of the web hook"""
+  description: String
+
+  """Type of web hook trigger"""
+  type: WebHookType
+
+  """URL of the webhook"""
+  url: String
+
+  """Web hook status"""
+  status: WebHookStatus
+
+  """Active"""
+  isActive: Boolean
+
+  """Related credential"""
+  credentialUUID: String
+}
+
+"""Type of webhook hook"""
+enum WebHookType {
+  transactions
+  all
+  slack
+  teams
+}
+
+"""Types of webhook status"""
+enum WebHookStatus {
+  created
+  error
+  ok
+}
+
+"""Fields required to create a webhook"""
+input WebHookInput {
+  """Name of the web hook"""
+  name: String!
+
+  """Description of the web hook"""
+  description: String
+
+  """Type of web hook trigger"""
+  type: WebHookType!
+
+  """URL of the webhook"""
+  url: String!
+
+  """Related credential"""
+  credentialUUID: String
+
+  """Active Status, default to false"""
+  isActive: Boolean = false
+}
+
+"""Fields available to update a webhook"""
+input WebHookUpdateInput {
+  """UUID of the existing web hook"""
+  uuid: String!
+
+  """Name of the web hook"""
+  name: String
+
+  """Description of the web hook"""
+  description: String
+
+  """Type of web hook trigger"""
+  type: WebHookType
+
+  """URL of the webhook"""
+  url: String
+
+  """Related credential"""
+  credentialUUID: String
+
+  """Active Status"""
+  isActive: Boolean
+}
+
+"""Message queue connection settings"""
+type MessageBrokerConnnection {
+  """The host address for the message broker"""
+  address: String
+
+  """The vHost for the message broker"""
+  vHost: String
+
+  """The port for the message broker"""
+  port: Int
+}
+
+type LicenseInfo {
+  devicesInUse: Int
+  maxStepupDevices: Int
+}
+
+"""The response returned after successfully creating a csv payload"""
+type CsvResponse {
+  """CSV file as a stringified payload, quoted, with header row"""
+  csv: String
+}
+
+type Query {
+  """Get the account details"""
+  listAccount: Account
+
+  """Find all cards belonging to a user"""
+  listCards(username: String!): [Card]
+
+  """Get a list of all credentials for the current account"""
+  listCredentials(pagination: PaginationInput!): PaginatedCredentials
+
+  """Find a credential from its uuid"""
+  getCredential(uuid: String!): Credential
+
+  """Get a list of all devices currently assigned to the account"""
+  listDevices(pagination: PaginationInput!, searchCriteria: String): PaginatedDevices
+
+  """Get a list of all outstanding device key requests for the account"""
+  listDeviceHashKeyRequests: [DeviceHashKeyRequest]
+
+  """Check the status of a particular service"""
+  healthCheck(service: Service!): ServiceHealthResponse
+
+  """Check the status of the platform as a whole"""
+  healthCheckPlatform: PlatformHealthResponse
+
+  """Get a list of all schedules currently assigned to the account"""
+  listSchedules(pagination: PaginationInput!): PaginatedSchedules
+
+  """Get a list of all users for the current account"""
+  listUsers(pagination: PaginationInput!, searchCriteria: String): PaginatedUsers
+
+  """Find all cards belonging to a user"""
+  listProfiles(pagination: PaginationInput!, username: String!): PaginatedUserProfiles
+
+  """Get a list of all transactions for the current account"""
+  listTransactions(username: String, groupUUID: String, fromDate: DateTime, toDate: DateTime, pagination: PaginationInput!): PaginatedTransactions
+
+  """Get a list of all transactions for the current account as csv"""
+  listTransactionsAsCSV(username: String, groupUUID: String, fromDate: DateTime, toDate: DateTime): CsvResponse
+
+  """Get a list of all past sync events for the current account"""
+  listSyncEvents(pagination: PaginationInput!): PaginatedSyncEvents
+
+  """Get a list of all groups for the current account"""
+  listGroups(pagination: PaginationInput!): PaginatedGroups
+
+  """Get a list of all transactions for the current account"""
+  listNotifications(pagination: PaginationInput!): PaginatedNotifications
+
+  """List all the available authenticators"""
+  listAuthenticators: [String]
+
+  """Retrieve the settings for the current account"""
+  listSettings: Settings
+
+  """List Bcid settings"""
+  listBcidSettings(credentialUUID: String): BcidSettings
+
+  """Get a list of all WebHooks for the current account"""
+  listWebHooks(pagination: PaginationInput!): PaginatedWebHooks
+
+  """Find a webHook from its uuid"""
+  getWebHook(uuid: String!): WebHook
+
+  """Get message connection information"""
+  getMessageBroker: MessageBrokerConnnection
+
+  """Get License Info"""
+  getLicenseInfo: LicenseInfo
 }
 
 type Mutation {
@@ -599,527 +1184,4 @@ type Mutation {
 
   """Delete an existing webHook"""
   deleteWebHook(uuid: String!): String
-}
-
-"""
-Notification object, representing any sort of notification in the
-system
-"""
-type Notification {
-  uuid: String
-  timestamp: String
-  level: NotificationLevel
-  source: String
-  message: String
-  rawData: String
-}
-
-enum NotificationLevel {
-  info
-  warn
-  critical
-}
-
-"""The response for listCredentials"""
-type PaginatedCredentials {
-  objects: [Credential]
-  totalRows: Int
-}
-
-"""The response for listDevices"""
-type PaginatedDevices {
-  objects: [Device]
-  totalRows: Int
-}
-
-"""The response for listGroups"""
-type PaginatedGroups {
-  objects: [Group]
-  totalRows: Int
-}
-
-"""The response for listNotifications"""
-type PaginatedNotifications {
-  objects: [Notification]
-  totalRows: Int
-}
-
-"""The response for listSchedules"""
-type PaginatedSchedules {
-  objects: [Schedule]
-  totalRows: Int
-}
-
-"""The response for listSyncEvents"""
-type PaginatedSyncEvents {
-  objects: [SyncEvent]
-  totalRows: Int
-}
-
-"""The response for listTransactions"""
-type PaginatedTransactions {
-  objects: [Transaction]
-  totalRows: Int
-}
-
-"""The response for listProfiles"""
-type PaginatedUserProfiles {
-  objects: [UserProfile]
-  totalRows: Int
-}
-
-"""The response for listUsers"""
-type PaginatedUsers {
-  objects: [User]
-  totalRows: Int
-}
-
-"""The response for listWebHooks"""
-type PaginatedWebHooks {
-  objects: [WebHook]
-  totalRows: Int
-}
-
-"""Pagination object"""
-type PaginationInfo {
-  page: Int
-  perPage: Int
-  totalRows: Int
-}
-
-"""Pagination fields that are configurable"""
-input PaginationInput {
-  """The page that you would like to get. Works in tandem with perPage"""
-  page: Int!
-
-  """Number of objects per page, defaults to 10"""
-  perPage: Int = 10
-}
-
-type PlatformHealthResponse {
-  level: HealthLevel
-  message: String
-}
-
-enum ProfileType {
-  ACM_Brivo_OnSite
-  ACM_Brivo_OnAir
-  ACM_Genetec_SecurityCenter
-  ACM_KantechEntraPass
-  ACM_KeyScan_Aurora
-  ACM_Lenel_OnGuard
-  ACM_OpenOptions_dnaFusion
-  ACM_PACOM_GMS
-  ACM_Paxton_GMS
-  ACM_PCSC_LincPLUS
-  ACM_Honeywell_ProWatch
-  ACM_RS2_AccessIt
-  ACM_S2_Netbox
-  ACM_SoftwareHouse_CCURE9000
-  ACM_Honeywell_WINPAK
-  STEPUP_Duo
-  STEPUP_BCID
-}
-
-type Query {
-  """Get the account details"""
-  listAccount: Account
-
-  """Find all cards belonging to a user"""
-  listCards(username: String!): [Card]
-
-  """Get a list of all credentials for the current account"""
-  listCredentials(pagination: PaginationInput!): PaginatedCredentials
-
-  """Find a credential from its uuid"""
-  getCredential(uuid: String!): Credential
-
-  """Get a list of all devices currently assigned to the account"""
-  listDevices(pagination: PaginationInput!, searchCriteria: String): PaginatedDevices
-
-  """Get a list of all outstanding device key requests for the account"""
-  listDeviceHashKeyRequests: [DeviceHashKeyRequest]
-
-  """Check the status of a particular service"""
-  healthCheck(service: Service!): ServiceHealthResponse
-
-  """Check the status of the platform as a whole"""
-  healthCheckPlatform: PlatformHealthResponse
-
-  """Get a list of all schedules currently assigned to the account"""
-  listSchedules(pagination: PaginationInput!): PaginatedSchedules
-
-  """Get a list of all users for the current account"""
-  listUsers(pagination: PaginationInput!, searchCriteria: String): PaginatedUsers
-
-  """Find all cards belonging to a user"""
-  listProfiles(pagination: PaginationInput!, username: String!): PaginatedUserProfiles
-
-  """Get a list of all transactions for the current account"""
-  listTransactions(username: String, pagination: PaginationInput!): PaginatedTransactions
-
-  """Get a list of all past sync events for the current account"""
-  listSyncEvents(pagination: PaginationInput!): PaginatedSyncEvents
-
-  """Get a list of all groups for the current account"""
-  listGroups(pagination: PaginationInput!): PaginatedGroups
-
-  """Get a list of all transactions for the current account"""
-  listNotifications(pagination: PaginationInput!): PaginatedNotifications
-
-  """List all the available authenticators"""
-  listAuthenticators: [String]
-
-  """Retrieve the settings for the current account"""
-  listSettings: Settings
-
-  """Get a list of all WebHooks for the current account"""
-  listWebHooks(pagination: PaginationInput!): PaginatedWebHooks
-
-  """Find a webHook from its uuid"""
-  getWebHook(uuid: String!): WebHook
-}
-
-"""
-Schedule object, representing a time based schedule in which a action
-should take place
-"""
-type Schedule {
-  uuid: String
-  startTime: String
-  endTime: String
-  name: String
-  description: String
-  isActive: Boolean
-  isAccountWide: Boolean
-  isRecurring: Boolean
-}
-
-"""Fields required to create a new schedule"""
-input ScheduleInput {
-  startTime: String!
-  endTime: String!
-  name: String!
-  description: String!
-  isActive: Boolean = true
-  isAccountWide: Boolean = true
-  isRecurring: Boolean = true
-}
-
-"""Fields available to edit a schedule"""
-input ScheduleUpdateInput {
-  uuid: String!
-  startTime: String
-  endTime: String
-  name: String
-  description: String
-  isActive: Boolean
-  isAccountWide: Boolean
-  isRecurring: Boolean
-}
-
-"""Available service names"""
-enum Service {
-  """Handles storage of data"""
-  dataStoreService
-
-  """Handles the stepup logic"""
-  authService
-
-  """Interfaces with the hardware and performs the access control logic"""
-  physicalAccessService
-
-  """Creates and verifys tokens for sessions"""
-  tokenService
-
-  """Handles all logic for getting the hardware up and running"""
-  deviceManagementService
-
-  """Handles outbound notification logic"""
-  notificationService
-
-  """Handles the acm sync logic"""
-  syncService
-
-  """Handles storing the sync data"""
-  syncStorageService
-}
-
-"""Fields returned after checking the health of a given service"""
-type ServiceHealthResponse {
-  """Name of service"""
-  service: String
-
-  """Timestamp of last online"""
-  timestamp: String
-
-  """Online status"""
-  online: Boolean
-}
-
-"""Settings object"""
-type Settings {
-  authenticator: AuthenticatorType
-  credentialUUID: String
-  bcidSettings: BcidSettings
-}
-
-"""Fields available for account settings"""
-input SettingsUpdateInput {
-  authenticator: AuthenticatorType
-  credentialUUID: String
-  bcidSettings: BcidSettingsUpdateInput
-}
-
-"""information required to complete a sync agent activation"""
-input SyncAgentActivationInput {
-  csr: String!
-}
-
-"""information returned after a successful activation"""
-type SyncAgentActivationResponse {
-  certificate: String
-}
-
-"""Object representing a sync event"""
-type SyncEvent {
-  startTime: String
-  endTime: String
-  totalTime: String
-  uuid: String
-}
-
-"""Fields required to update a sync event"""
-input SyncEventInput {
-  uuid: String!
-  endTime: String!
-}
-
-"""
-Transaction object, representing any sort of access transaction in the
-system
-"""
-type Transaction {
-  username: String
-  userUUID: String
-  cardUUID: String
-  uuid: String
-  message: String
-  type: TransactionType
-  readerId: String
-  readerName: String
-  status: String
-  complete: Boolean
-  isValid: Boolean
-  requireStepUp: Boolean
-  stepUpProvider: String
-  locationId: String
-  offline: Boolean
-  createdAt: String
-  updatedAt: String
-}
-
-input TransactionInput {
-  username: String!
-  type: TransactionType!
-  additionalInfo: String
-  deviceSerialNumber: String
-}
-
-"""Response for a transaction"""
-type TransactionResponse {
-  dataType: TransactionType
-  username: String
-  isValid: Boolean
-  error: String
-}
-
-"""Type of data stored for a particular transaction"""
-enum TransactionType {
-  Stepup
-  RemoteOpen
-  Wiegand
-}
-
-"""User object, representing a User in the system"""
-type User {
-  username: String
-  firstName: String
-  lastName: String
-  email: String
-  phoneNumber: String
-  bio: String
-  roles: [UserRole]
-  cards: [Card]
-  profiles: [UserProfile]
-  accounts: [Account]
-  uuid: String
-}
-
-"""Fields required to create a new user"""
-input UserInput {
-  username: String!
-  password: String!
-  firstName: String!
-  lastName: String!
-  email: String!
-  phoneNumber: String
-  bio: String!
-  role: UserRoleType = user
-}
-
-"""Fields required to change the password of a user"""
-input UserPasswordChangeInput {
-  password: String!
-  newPassword: String!
-}
-
-"""Fields required to reset the password of a user"""
-input UserPasswordResetInput {
-  subDomain: String!
-  username: String!
-}
-
-"""User profile, representing a user in a third-party system"""
-type UserProfile {
-  uuid: String
-  externalId: String
-  name: String
-  type: ProfileType
-  isBypass: Boolean
-  isActive: Boolean
-  rawData: String
-}
-
-"""Fields required to create a new user profile"""
-input UserProfileInput {
-  username: String!
-  rawData: String!
-  type: ProfileType!
-  externalId: String!
-  name: String
-  isBypass: Boolean = true
-  isActive: Boolean = true
-}
-
-"""Fields available to edit a user profile"""
-input UserProfileUpdateInput {
-  uuid: String!
-  externalId: String
-  name: String
-  type: ProfileType
-  isBypass: Boolean
-  isActive: Boolean
-  rawData: String
-}
-
-type UserRole {
-  name: UserRoleType
-  description: String
-}
-
-"""Roles available to assign to a user"""
-enum UserRoleType {
-  """Completly powerless"""
-  user
-
-  """CRUD all the things!"""
-  administrator
-}
-
-"""Fields available to edit a user"""
-input UserUpdateInput {
-  username: String!
-  firstName: String
-  lastName: String
-  email: String
-  phoneNumber: String
-  bio: String
-  role: UserRoleType
-}
-
-"""Web hook object, representing a web hook in the system"""
-type WebHook {
-  """Name of the web hook"""
-  name: String
-
-  """Unique id of the web hook"""
-  uuid: String
-
-  """Description of the web hook"""
-  description: String
-
-  """Type of web hook trigger"""
-  type: WebHookType
-
-  """URL of the webhook"""
-  url: String
-
-  """Web hook status"""
-  status: WebHookStatus
-
-  """Active"""
-  isActive: Boolean
-
-  """Related credential"""
-  credentialUUID: String
-}
-
-"""Fields required to create a webhook"""
-input WebHookInput {
-  """Name of the web hook"""
-  name: String!
-
-  """Description of the web hook"""
-  description: String
-
-  """Type of web hook trigger"""
-  type: WebHookType!
-
-  """URL of the webhook"""
-  url: String!
-
-  """Related credential"""
-  credentialUUID: String
-
-  """Active Status, default to false"""
-  isActive: Boolean = false
-}
-
-"""Types of webhook status"""
-enum WebHookStatus {
-  created
-  error
-  ok
-}
-
-"""Type of webhook hook"""
-enum WebHookType {
-  transactions
-  all
-  slack
-}
-
-"""Fields available to update a webhook"""
-input WebHookUpdateInput {
-  """UUID of the existing web hook"""
-  uuid: String!
-
-  """Name of the web hook"""
-  name: String
-
-  """Description of the web hook"""
-  description: String
-
-  """Type of web hook trigger"""
-  type: WebHookType
-
-  """URL of the webhook"""
-  url: String
-
-  """Related credential"""
-  credentialUUID: String
-
-  """Active Status"""
-  isActive: Boolean
 }
